@@ -1,0 +1,68 @@
+# Q-EMS — single-org self-hosted deployment.
+#   docker compose up --build
+# App + Postgres + MinIO (S3-compatible object storage for documents, Phase 2+).
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: qems
+      POSTGRES_PASSWORD: qems
+      POSTGRES_DB: qems
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qems"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://qems:qems@db:5432/qems?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:-please-change-this-in-production-0123456789}
+      AUTH_TRUST_HOST: "true"
+      DEFAULT_ORG_SLUG: default
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      S3_BUCKET: qems
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    # Apply migrations and seed before booting the server.
+    command: >
+      sh -c "pnpm prisma migrate deploy &&
+             pnpm db:seed || true;
+             pnpm start"
+
+volumes:
+  db_data:
+  minio_data:
