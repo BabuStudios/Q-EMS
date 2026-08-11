@@ -1,0 +1,59 @@
+{
+  "app": {
+    "name": "Q-EMS",
+    "tagline": "Integrated management system for quality & environment"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "documents": "Documents",
+    "processes": "Process map",
+    "lists": "Lists & registers",
+    "actions": "My actions",
+    "audits": "Audits",
+    "admin": "Administration",
+    "auditLog": "Audit trail"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "email": "Email",
+    "password": "Password",
+    "signInTitle": "Sign in to Q-EMS",
+    "signInSubtitle": "Enter your credentials to continue",
+    "invalidCredentials": "Invalid email or password",
+    "signingIn": "Signing in …"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome, {name}",
+    "yourRole": "Your role",
+    "organization": "Organization",
+    "phaseNotice": "Phase 0 (Foundation) is in place: authentication, RBAC, audit trail and app shell."
+  },
+  "admin": {
+    "title": "Administration",
+    "subtitle": "Administrators only",
+    "users": "Users",
+    "roles": "Roles",
+    "auditLog": "Audit trail",
+    "noAccess": "You do not have access to this page."
+  },
+  "auditLog": {
+    "title": "Audit trail",
+    "subtitle": "Immutable log of all state changes",
+    "actor": "Actor",
+    "action": "Action",
+    "entity": "Entity",
+    "when": "When",
+    "empty": "No events yet."
+  },
+  "errors": {
+    "forbiddenTitle": "Access denied",
+    "forbiddenBody": "You do not have permission to view this page.",
+    "backToDashboard": "Back to dashboard"
+  },
+  "common": {
+    "language": "Language",
+    "loading": "Loading …"
+  }
+}
