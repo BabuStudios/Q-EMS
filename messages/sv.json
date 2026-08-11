@@ -1,0 +1,59 @@
+{
+  "app": {
+    "name": "Q-EMS",
+    "tagline": "Integrerat ledningssystem för kvalitet & miljö"
+  },
+  "nav": {
+    "dashboard": "Översikt",
+    "documents": "Dokument",
+    "processes": "Processkarta",
+    "lists": "Listor & register",
+    "actions": "Mina åtgärder",
+    "audits": "Revisioner",
+    "admin": "Administration",
+    "auditLog": "Spårningslogg"
+  },
+  "auth": {
+    "signIn": "Logga in",
+    "signOut": "Logga ut",
+    "email": "E-post",
+    "password": "Lösenord",
+    "signInTitle": "Logga in på Q-EMS",
+    "signInSubtitle": "Ange dina uppgifter för att fortsätta",
+    "invalidCredentials": "Felaktig e-post eller lösenord",
+    "signingIn": "Loggar in …"
+  },
+  "dashboard": {
+    "title": "Översikt",
+    "welcome": "Välkommen, {name}",
+    "yourRole": "Din roll",
+    "organization": "Organisation",
+    "phaseNotice": "Fas 0 (Grund) är på plats: autentisering, RBAC, spårningslogg och appskal."
+  },
+  "admin": {
+    "title": "Administration",
+    "subtitle": "Endast för administratörer",
+    "users": "Användare",
+    "roles": "Roller",
+    "auditLog": "Spårningslogg",
+    "noAccess": "Du saknar behörighet till denna sida."
+  },
+  "auditLog": {
+    "title": "Spårningslogg",
+    "subtitle": "Oföränderlig logg över alla tillståndsändringar",
+    "actor": "Aktör",
+    "action": "Händelse",
+    "entity": "Entitet",
+    "when": "Tidpunkt",
+    "empty": "Inga händelser ännu."
+  },
+  "errors": {
+    "forbiddenTitle": "Åtkomst nekad",
+    "forbiddenBody": "Du har inte behörighet att se denna sida.",
+    "backToDashboard": "Tillbaka till översikten"
+  },
+  "common": {
+    "language": "Språk",
+    "loading": "Laddar …"
+  }
+}
