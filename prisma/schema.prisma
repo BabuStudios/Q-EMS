@@ -1,0 +1,209 @@
+// Q-EMS — Integrerat ledningssystem (IMS) för ISO 9001 + ISO 14001:2026
+// Phase 0 backbone. Fields are added per phase; soft-delete + audit hold on all
+// tenant-bound models. Every tenant-bound table carries `organizationId` so the
+// single-tenant -> multi-tenant switch is configuration, not a schema migration.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// Tenancy
+// -----------------------------------------------------------------------------
+
+model Organization {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  name      String
+  // Active standards in scope, e.g. ["ISO9001", "ISO14001"].
+  standards String[]  @default(["ISO9001", "ISO14001"])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  users         User[]
+  roles         Role[]
+  auditLogs     AuditLog[]
+  notifications Notification[]
+}
+
+// -----------------------------------------------------------------------------
+// Identity & RBAC
+// -----------------------------------------------------------------------------
+
+model User {
+  id             String    @id @default(cuid())
+  organizationId String
+  email          String
+  name           String?
+  // Null when the user authenticates exclusively via OIDC/SSO.
+  passwordHash   String?
+  roleId         String?
+  isActive       Boolean   @default(true)
+  locale         String    @default("sv")
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  organization  Organization   @relation(fields: [organizationId], references: [id])
+  role          Role?          @relation(fields: [roleId], references: [id])
+  accounts      Account[]
+  sessions      Session[]
+  notifications Notification[]
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
+  @@index([roleId])
+}
+
+model Role {
+  id             String    @id @default(cuid())
+  organizationId String
+  // Stable machine key, e.g. "SYSTEM_ADMIN". Used by server-side guards.
+  key            String
+  name           String
+  description    String?
+  // System roles are seeded and cannot be deleted via the UI.
+  isSystem       Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  organization Organization     @relation(fields: [organizationId], references: [id])
+  users        User[]
+  permissions  RolePermission[]
+
+  @@unique([organizationId, key])
+  @@index([organizationId])
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  // Dotted key, e.g. "admin.access", "document.approve".
+  key         String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  roles RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+// -----------------------------------------------------------------------------
+// Auth.js (NextAuth v5) — present so OIDC/SSO is config, not a refactor.
+// Credentials login uses JWT sessions; these tables back future OAuth/OIDC.
+// -----------------------------------------------------------------------------
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// -----------------------------------------------------------------------------
+// Audit trail — append-only. Written by the Prisma client extension on every
+// create/update/soft-delete. Never updated, never deleted (immutable evidence).
+// -----------------------------------------------------------------------------
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  SOFT_DELETE
+  RESTORE
+  LOGIN
+  LOGOUT
+}
+
+model AuditLog {
+  id             String      @id @default(cuid())
+  organizationId String?
+  actorId        String?
+  actorEmail     String?
+  action         AuditAction
+  entity         String
+  entityId       String?
+  before         Json?
+  after          Json?
+  ip             String?
+  userAgent      String?
+  createdAt      DateTime    @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([entity, entityId])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+// -----------------------------------------------------------------------------
+// Notifications (expanded in Phase 1 with pg-boss reminders)
+// -----------------------------------------------------------------------------
+
+model Notification {
+  id             String    @id @default(cuid())
+  organizationId String
+  userId         String
+  type           String    @default("info")
+  title          String
+  body           String?
+  link           String?
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+  deletedAt      DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@index([organizationId])
+  @@index([userId])
+}
